@@ -1,0 +1,57 @@
+#' The variance of symbolic histogram variable
+#'
+#' @name hist_var
+#' @aliases hist_var
+#' @description This function compute the variance of symbolic histogram variable.
+#' @usage hist_var(object, var)
+#' @param object A MatH object.
+#' @param var A symbolic histogram variable.
+#' @returns Return variance of the histogram variable.
+#' @examples
+#' hist_var(Blood, 'Cholesterol')
+#' @export
+
+hist_var <- function(object, var){
+  location_var <- which(colnames(object@M) == var)
+  nr <- nrow(object@M)
+  nc <- ncol(object@M)
+  b1 <- c()
+  b3 <- c()
+
+  for (i in 1:nr){
+    for (j in 1:nc){
+      p1 <- object@M[i, j][[1]]@p[2:length(object@M[i, j][[1]]@p)]
+      p2 <- object@M[i, j][[1]]@p[1:length(object@M[i, j][[1]]@p) - 1]
+      p <- p1 - p2
+      a <- c()
+      a1 <- c()
+      for (k in 1:length(p)){
+        s <- ((object@M[i, j][[1]]@x[k])^2 + (object@M[i, j][[1]]@x[k + 1])^2 + (object@M[i, j][[1]]@x[k])*(object@M[i, j][[1]]@x[k + 1]))*p[k]
+        s1 <- (object@M[i, j][[1]]@x[k] + object@M[i, j][[1]]@x[k + 1])*p[k]
+        a <- c(a, s)
+        a1 <- c(a1, s1)
+      }
+      b <- sum(a)
+      b1 <- c(b1, b)
+      b2 <- sum(a1)
+      b3 <- c(b3, b2)
+    }
+  }
+
+  B <- matrix(b1, nrow = nrow(object@M), byrow = T,
+              dimnames = list(rownames(object@M), colnames(object@M)))
+  C <- matrix(b3, nrow = nrow(object@M), byrow = T,
+              dimnames = list(rownames(object@M), colnames(object@M)))
+
+  squarefun <- function(x){
+    x <- sum(x)^2
+  }
+
+  S2 <- apply(B, 2, sum)/(3 * nr) - apply(C, 2, squarefun)/(4 * nr^2)
+  var.df <- t(data.frame(S2))
+  row.names(var.df) <- 'variance'
+  colnames(var.df) <- colnames(object@M)
+  result <- var.df[location_var]
+  return(result)
+}
+

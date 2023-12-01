@@ -1,0 +1,116 @@
+---
+title: "Introduction to dataSDA"
+author: "Po-Wei Chen"
+date: "2023-06-27"
+output: 
+  rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to dataSDA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(out.width = "100%")
+knitr::opts_chunk$set(fig.align = 'center')
+library(knitr)
+library(dataSDA)
+library(RSDA)
+```
+
+## Example of iGAP format Data
+### Built-in Data
+
+```{r}
+data(Face.iGAP)
+head(Face.iGAP)
+```
+
+### iGAP to MM
+
+To convert iGAP files to MM format.
+
++ `data` = the dataframe with the iGAP format
++ `location` = the location of the symbolic variable in the data
+
+```{r}
+Face <- iGAP_to_MM(data = Face.iGAP, location = 1:6)
+head(Face)
+```
+
+### RSDA format
+
+Changes the format of the data to conform to RSDA format.
+
++ `data` = the conventional dataframe
++ `sym_type1` = the labels I means an interval variable, and S means set variable in location
++ `location` = the location of the sym_type in the data
++ `sym_type2` = the labels I means an interval variable, and S means set variable in var
++ `var` = the name of the symbolic variable in the data
+ 
+```{r}
+Face.tmp <- RSDA_format(data = Face, 
+                        sym_type1 = c("I", "I", "I", "I", "I", "I"), 
+                        location = c(1, 3, 5, 7, 9, 11))
+head(Face.tmp)
+```
+
+### Clean the column names
+
+Clean up variable names to conform to the RSDA format.
+
++ `data` = the conventional dataframe
+
+```{r}
+Face.clean <- clean_colnames(data = Face.tmp)
+head(Face.clean)
+```
+
+### Write a symbolic data table from a CSV data file
+
+```{r, eval = FALSE}
+write_csv_table(data = Face.clean, file = 'Face_interval.csv')
+```
+
+### Read the symbolic data table and check the format
+
+```{r}
+Face.interval <- read.sym.table(file = 'Face_interval.csv', header = T, sep = ';', dec = '.', row.names = 1)
+head(Face.interval)
+```
+
+### RSDA to MM
+
+To convert RSDA format interval dataframe to MM format.
+
++ `data` = the RSDA format with interval dataframe
++ `RSDA` = Whether to load the RSDA package.
+
+```{r}
+Face.MM <- RSDA_to_MM(Face.interval, RSDA = TRUE)
+head(Face.MM)
+```
+
+### MM to iGAP
+
+To convert MM format interval dataframe to iGAP format.
+
++ `data` = the MM format with interval dataframe
+
+```{r}
+Face.iGAP_trans <- MM_to_iGAP(Face.MM)
+head(Face.iGAP_trans)
+```
+
+
+

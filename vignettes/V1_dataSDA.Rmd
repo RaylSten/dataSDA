@@ -1,0 +1,123 @@
+---
+title: "Introduction to dataSDA 1"
+author: "Po-Wei Chen"
+date: "2023-06-26"
+output: 
+  rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to dataSDA 1}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(out.width = "100%")
+knitr::opts_chunk$set(fig.align = 'center')
+library(knitr)
+library(dataSDA)
+library(RSDA)
+```
+
+## Example of Interval-Valued Data
+### Built-in Data
+
+```{r}
+data(Mushroom2)
+head(Mushroom2)
+```
+
+### Set variable format
+
+Changes the format of the set variables in the data to conform to the RSDA format.
+
++ `data` = the conventional dataframe
++ `location` = the location of the set variable in the data
++ `var` = the name of the set variable in the data
+
+```{r}
+mushroom.set <- set_variable_format(data = Mushroom2, location = 8, var = "Species")
+head(mushroom.set)
+```
+
+### RSDA format
+
+Changes the format of the data to conform to RSDA format.
+
++ `data` = the conventional dataframe
++ `sym_type1` = the labels I means an interval variable, and S means set variable in location
++ `location` = the location of the sym_type in the data
++ `sym_type2` = the labels I means an interval variable, and S means set variable in var
++ `var` = the name of the symbolic variable in the data
+ 
+```{r}
+mushroom.tmp <- RSDA_format(data = mushroom.set, sym_type1 = c("I", "S"),
+                            location = c(25, 31), sym_type2 = c("S", "I", "I"),
+                            var = c("Species", "Stipe.Length_min", "Stipe.Thickness_min"))
+head(mushroom.tmp)
+```
+
+### Clean the column names
+
+Clean up variable names to conform to the RSDA format.
+
++ `data` = the conventional dataframe
+
+```{r}
+mushroom.clean <- clean_colnames(data = mushroom.tmp)
+head(mushroom.clean)
+```
+
+### Write a symbolic data table from a CSV data file
+
+```{r, eval = FALSE}
+write_csv_table(data = mushroom.clean, file = 'mushroom_interval.csv')
+```
+
+### Read the symbolic data table and check the format
+
+```{r}
+mushroom.interval <- read.sym.table(file = 'mushroom_interval.csv', header = T, sep = ';', dec = '.', row.names = 1)
+head(mushroom.interval)
+```
+
+### RSDA to MM
+
+To convert RSDA format interval dataframe to MM format.
+
++ `data` = the RSDA format with interval dataframe
++ `RSDA` = Whether to load the RSDA package.
+
+```{r}
+mushroom.MM <- RSDA_to_MM(mushroom.interval, RSDA = TRUE)
+head(mushroom.MM)
+```
+
+## Example of iGAP format Data
+### Built-in Data
+
+```{r}
+data(Abalone.iGAP)
+head(Abalone.iGAP)
+```
+
+### iGAP to MM
+
+To convert iGAP files to MM format.
+
++ `data` = the conventional dataframe(iGAP format)
++ `location` = the location of the symbolic variable in the data
+
+```{r}
+Abalone <- iGAP_to_MM(Abalone.iGAP, 1:7)
+head(Abalone)
+```

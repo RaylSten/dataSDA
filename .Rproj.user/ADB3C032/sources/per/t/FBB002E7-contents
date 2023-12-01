@@ -1,0 +1,88 @@
+#' The wasserstein variance of symbolic histogram variable
+#'
+#' @name hist_var_w
+#' @aliases hist_var_w
+#' @description This function compute the variance of symbolic histogram variable.
+#' @usage hist_var_w(object, var)
+#' @param object A MatH object.
+#' @param var A symbolic histogram variable.
+#' @returns Return wasserstein variance of the histogram variable.
+#' @importFrom HistDAWass rQQ
+#' @examples
+#' hist_var_w(Blood, 'Cholesterol')
+#' @export
+
+hist_var_w <- function(object, var){
+
+  location_var <- which(colnames(object@M) == var)
+  nr <- nrow(object@M)
+  nc <- ncol(object@M)
+  MatH.mean <- function(object) {
+    MAT <- matrix(NA, nr, nc,
+                  dimnames = list(rownames(object@M), colnames(object@M)))
+    for (i in 1:nr) {
+      for (j in 1:nc) {
+        if (length(object@M[i, j][[1]]@x) > 0) {
+          MAT[i, j] <- object@M[i, j][[1]]@m
+        }
+      }
+    }
+    return(mat = MAT)
+  }
+
+  MatH.sd <- function(object) {
+    MAT <- matrix(NA, nr, nc,
+                  dimnames = list(rownames(object@M), colnames(object@M)))
+    for (i in 1:nr) {
+      for (j in 1:nc) {
+        if (length(object@M[i, j][[1]]@x) > 0) {
+          MAT[i, j] <- object@M[i, j][[1]]@s
+        }
+      }
+    }
+    return(mat = MAT)
+  }
+
+
+  Mean.MW <- apply(MatH.mean(object), 2, mean)
+
+  myfun <- function(x){
+    sum(x^2)
+  }
+
+  SM2.W <- apply(MatH.mean(object), 2, myfun)/nrow(MatH.mean(object)) - Mean.MW ^ 2
+  SM2.W.df <- t(data.frame(SM2.W))
+  colnames(SM2.W.df) <- colnames(object@M)
+  rownames(SM2.W.df) <- 'variance'
+  SM2.Wass <- SM2.W.df[location_var]
+
+  H <- apply(MatH.sd(object), 2, myfun)/nr
+  R_list <- list()
+
+  for(k in 1:nc){
+    Correlaiton_table <- matrix(0, nr, nr)
+    Sigma_table <- matrix(0, nr, nr)
+    R_table <- matrix(0, nr, nr)
+    for(i in 1:nr){
+      for(j in 1:nr){
+        Correlaiton_table[i, j] <- HistDAWass::rQQ(object@M[i, k][[1]], object@M[j, k][[1]])
+        Sigma_table[i, j] <- MatH.sd(object)[i, k] * MatH.sd(object)[j, k]
+      }
+    }
+    R_table <- Correlaiton_table * Sigma_table
+    dimnames(R_table) <- list(rownames(object@M), rownames(object@M))
+    assign(paste("R_table", k, sep = ""), R_table)
+    R_list[[k]] <- R_table
+  }
+
+  names(R_list) <- paste0("R_table", 1:nc)
+  sums <- sapply(R_list, sum)
+  SV2 <- t(data.frame(H - sums/(nr^2)))
+  colnames(SV2) <- colnames(object@M)
+  rownames(SV2) <- 'variance'
+  SV2.Wass <- SV2[location_var]
+
+  S2.W <- SM2.Wass + SV2.Wass
+  return(S2.W)
+}
+
